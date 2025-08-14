@@ -1,0 +1,7 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Simple base styles */
+body { @apply bg-gray-50; }
+a { @apply underline-offset-2; }
