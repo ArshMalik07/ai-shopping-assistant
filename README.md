@@ -176,7 +176,7 @@ npm run dev
 
 MIT License
 
-Copyright (c) 2025 [Your Name or Organization]
+Copyright (c) 2025 Parul University
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
