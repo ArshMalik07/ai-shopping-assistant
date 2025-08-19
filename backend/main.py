@@ -1,280 +1,4 @@
-# # from fastapi import FastAPI
-# # from pydantic import BaseModel
-# # from fastapi.middleware.cors import CORSMiddleware
-# # from backend.chat_chain import ask_ai
-
-# # # Step 1: Initialize FastAPI
-# # app = FastAPI(title="AI Shopping Assistant API")
-
-# # # Step 2: Enable CORS (so frontend can access API)
-# # app.add_middleware(
-# #     CORSMiddleware,
-# #     allow_origins=["*"],  # Change to specific domain in production
-# #     allow_credentials=True,
-# #     allow_methods=["*"],
-# #     allow_headers=["*"],
-# # )
-
-# # # Step 3: Create request model
-# # class ChatRequest(BaseModel):
-# #     query: str
-
-# # # Step 4: Root route (health check)
-# # @app.get("/")
-# # def read_root():
-# #     return {"message": "AI Shopping Assistant Backend is running!"}
-
-# # # Step 5: Chat route
-# # @app.post("/chat")
-# # def chat_endpoint(request: ChatRequest):
-# #     answer = ask_ai(request.query)
-# #     return {"query": request.query, "response": answer}
-
-
-
-# # backend/main.py
-
-# from fastapi import FastAPI
-# from pydantic import BaseModel
-# from backend.chat_chain import ask_ai
-# from backend.retriever import get_retriever
-# import json
-# from pathlib import Path
-
-# app = FastAPI()
-
-# # Global retriever
-# retriever = None
-
-# class ChatRequest(BaseModel):
-#     query: str
-
-# class SearchRequest(BaseModel):
-#     query: str
-#     top_k: int = 2
-
-# @app.on_event("startup")
-# def load_retriever():
-#     """
-#     Server start hone par retriever ek hi baar load hoga
-#     """
-#     global retriever
-#     retriever = get_retriever()
-#     print("Retriever loaded successfully!")
-
-# @app.get("/")
-# def read_root():
-#     return {"message": "AI Shopping Assistant Backend is running!"}
-
-# @app.post("/chat")
-# def chat(request: ChatRequest):
-#     response = ask_ai(request.query)
-#     return {
-#         "answer": response["result"],
-#         "sources": [doc.metadata for doc in response["source_documents"]]
-#     }
-
-# @app.get("/products")
-# def get_products():
-#     file_path = Path(__file__).parent/"data/products.json"
-#     with open(file_path, "r", encoding="utf-8") as f:
-#         products = json.load(f)
-#     return products
-
-# @app.get("/products/{product_id}")
-# def get_product_by_id(product_id: str):
-#     file_path = Path(__file__).parent/"data/products.json"
-#     with open(file_path, "r", encoding="utf-8") as f:
-#         products = json.load(f)
-
-#     for product in products:
-#         if product["product_id"] == product_id:
-#             return product
-#     return {"error": "Product not found"}
-
-# # @app.post("/search")
-# # def search_products(request: SearchRequest):
-# #     file_path = Path(__file__).parent/"data/products.json"
-# #     with open(file_path, "r", encoding='utf-8') as f:
-# #         products = {p["product_id"]: p for p in json.load(f)}
-
-# #     docs = retriever.get_relevant_documents(request.query)
-# #     results = []
-# #     for doc in docs[:request.top_k]:
-# #         pid = doc.metadata.get("product_id")
-# #         if pid in products:
-# #             results.append(products[pid])
-
-# #     return results
-
-# # @app.get("/recommendations/{product_id}")
-# # def recommend_products(product_id: str, top_k: int = 5):
-# #     file_path = Path(__file__).parent / "data/products.json"
-# #     with open(file_path, "r", encoding="utf-8") as f:
-# #         products = {p["product_id"]: p for p in json.load(f)}
-
-# #     if product_id not in products:
-# #         return {"error": "Product not found"}
-
-# #     product = products[product_id]
-# #     query_text = product["product_name"] + " " + product["about_product"]
-
-# #     docs = retriever.get_relevant_documents(query_text)
-# #     results = []
-# #     for doc in docs:
-# #         pid = doc.metadata.get("product_id")
-# #         if pid != product_id and pid in products:
-# #             results.append(products[pid])
-# #         if len(results) >= top_k:
-# #             break
-
-# #     return results
-
-
-
-# @app.post("/search")
-# def search_products(request: SearchRequest):
-#     retriever = get_retriever(k=request.top_k)
-#     docs = retriever.invoke(request.query)  # ✅ invoke instead of get_relevant_documents
-
-#     file_path = Path(__file__).parent / "data/products.json"
-#     with open(file_path, "r", encoding='utf-8') as f:
-#         products = {p["product_id"]: p for p in json.load(f)}
-
-#     results = []
-#     for doc in docs:
-#         pid = doc.metadata.get("product_id")
-#         if pid in products:
-#             results.append(products[pid])
-
-#     return results
-
-
-# @app.get("/recommendations/{product_id}")
-# def recommend_products(product_id: str, top_k: int = 5):
-#     retriever = get_retriever(k=top_k + 1)  # +1 so we can exclude the same product
-
-#     # Load product details
-#     file_path = Path(__file__).parent / "data/products.json"
-#     with open(file_path, "r", encoding="utf-8") as f:
-#         products = {p["product_id"]: p for p in json.load(f)}
-
-#     if product_id not in products:
-#         return {"error": "Product not found"}
-
-#     product = products[product_id]
-#     query_text = f"{product['product_name']} {product['about_product']}"
-
-#     # Get similar products
-#     docs = retriever.invoke(query_text)
-
-#     results = []
-#     for doc in docs:
-#         pid = doc.metadata.get("product_id")
-#         if pid != product_id and pid in products:  # Exclude the same product
-#             results.append(products[pid])
-#         if len(results) >= top_k:
-#             break
-
-#     return results
-
-
-# from fastapi import FastAPI
-# from pydantic import BaseModel
-# from backend.chat_chain import ask_ai
-# from backend.retriever import get_retriever
-# import json
-# from pathlib import Path
-
-# app = FastAPI()
-
-# retriever = None  # Global retriever
-
-# class ChatRequest(BaseModel):
-#     query: str
-
-# class SearchRequest(BaseModel):
-#     query: str
-#     top_k: int = 2
-
-# @app.on_event("startup")
-# def load_retriever():
-#     global retriever
-#     retriever = get_retriever()
-#     print("Retriever loaded successfully!")
-
-# @app.get("/")
-# def read_root():
-#     return {"message": "AI Shopping Assistant Backend is running!"}
-
-# @app.post("/chat")
-# def chat(request: ChatRequest):
-#     response = ask_ai(request.query)
-#     return {
-#         "answer": response["result"],
-#         "sources": [doc.metadata for doc in response["source_documents"]]
-#     }
-
-# @app.get("/products")
-# def get_products():
-#     file_path = Path(__file__).parent/"data/products.json"
-#     with open(file_path, "r", encoding="utf-8") as f:
-#         products = json.load(f)
-#     return products
-
-# @app.get("/products/{product_id}")
-# def get_product_by_id(product_id: str):
-#     file_path = Path(__file__).parent/"data/products.json"
-#     with open(file_path, "r", encoding="utf-8") as f:
-#         products = json.load(f)
-
-#     for product in products:
-#         if product["product_id"] == product_id:
-#             return product
-#     return {"error": "Product not found"}
-
-# @app.post("/search")
-# def search_products(query: str, top_k: int = 2):
-#     docs = retriever.invoke(query)  # Global retriever ka use
-#     file_path = Path(__file__).parent / "data/products.json"
-#     with open(file_path, "r", encoding='utf-8') as f:
-#         products = {p["product_id"]: p for p in json.load(f)}
-
-#     results = []
-#     for doc in docs:
-#         pid = doc.metadata.get("product_id")
-#         if pid in products:
-#             results.append(products[pid])
-
-#     return results
-
-# @app.get("/recommendations/{product_id}")
-# def recommend_products(product_id: str, top_k: int = 5):
-#     # ✅ global retriever ka clone banane ke bajaye search_kwargs override kar do
-#     docs = retriever.vectorstore.as_retriever(
-#         search_kwargs={"k": top_k + 1}
-#     ).invoke(
-#         f"{products[product_id]['product_name']} {products[product_id]['about_product']}"
-#     )
-
-#     file_path = Path(__file__).parent / "data/products.json"
-#     with open(file_path, "r", encoding="utf-8") as f:
-#         products = {p["product_id"]: p for p in json.load(f)}
-
-#     if product_id not in products:
-#         return {"error": "Product not found"}
-
-#     results = []
-#     for doc in docs:
-#         pid = doc.metadata.get("product_id")
-#         if pid != product_id and pid in products:
-#             results.append(products[pid])
-#         if len(results) >= top_k:
-#             break
-#     return results
-# 
-
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, Query
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from backend.chat_chain import ask_ai
@@ -288,6 +12,7 @@ from fastapi.middleware.cors import CORSMiddleware
 import json
 from pathlib import Path
 import logging
+from rapidfuzz import fuzz, process
 
 # -------------------- Logging Setup --------------------
 logging.basicConfig(
@@ -379,20 +104,59 @@ def get_product_by_id(product_id: str):
 
 # -------------------- Search Products --------------------
 @app.post("/search")
-def search_products(query: str, top_k: int = 2):
-    try:
-        docs = retriever.invoke(query)
-        results = []
-        seen = set()
-        for doc in docs:
-            pid = doc.metadata.get("product_id")
-            if pid in products_cache and pid not in seen:
-                results.append(products_cache[pid])
-                seen.add(pid)
-        return success_response("Search results", results)
-    except Exception as e:
-        logging.error(f"Search failed: {e}")
-        return error_response("Search failed")
+def search_products(query: str = Query(...), top_k: int = 5, category: str = None, min_price: float = None, max_price: float = None):
+    docs = retriever.invoke(query)
+
+    file_path = Path(__file__).parent / "data/products.json"
+    with open(file_path, "r", encoding="utf-8") as f:
+        products = {p["product_id"]: p for p in json.load(f)}
+
+    results = []
+    query_lower = query.lower()
+
+    # 1. Exact/substring match in product name
+    for doc in docs:
+        pid = doc.metadata.get("product_id")
+        if pid in products:
+            product = products[pid]
+            if query_lower in product["product_name"].lower():
+                results.append(product)
+
+    # 2. Fuzzy match if not enough results
+    if len(results) < top_k:
+        candidates = [p for p in products.values() if p not in results]
+        fuzzy_matches = process.extract(
+            query,
+            [(p["product_id"], p["product_name"] + " " + p.get("about_product", "")) for p in candidates],
+            scorer=fuzz.token_sort_ratio,
+            limit=top_k * 2
+        )
+        for (pid, _), score, _ in fuzzy_matches:
+            if score >= 70 and products[pid] not in results:
+                results.append(products[pid])
+            if len(results) >= top_k:
+                break
+
+    # 3. Apply filters if provided
+    def passes_filters(product):
+        if category and product.get("category") and product["category"].lower() != category.lower():
+            return False
+        if min_price is not None and float(product.get("price", 0)) < min_price:
+            return False
+        if max_price is not None and float(product.get("price", 0)) > max_price:
+            return False
+        return True
+    filtered_results = [p for p in results if passes_filters(p)]
+
+    # 4. Suggestions if no results
+    suggestions = []
+    if not filtered_results:
+        # Suggest similar product names
+        all_names = [p["product_name"] for p in products.values()]
+        suggestions = [s for s, score, _ in process.extract(query, all_names, scorer=fuzz.token_sort_ratio, limit=3) if score >= 60]
+
+    return {"products": filtered_results[:top_k], "suggestions": suggestions}
+
 
 # -------------------- Recommendations --------------------
 @app.get("/recommendations/{product_id}")
@@ -401,7 +165,23 @@ def recommend_products(product_id: str, top_k: int = 5):
         return error_response("Product not found")
 
     try:
-        query_text = f"{products_cache[product_id]['product_name']} {products_cache[product_id]['about_product']}"
+        p = products_cache[product_id]
+        parts = [
+            p.get('product_name', ''),
+            p.get('about_product', ''),
+            p.get('category', ''),
+            p.get('brand', '') or p.get('manufacturer', ''),
+        ]
+        # include optional features/tags/specs if present
+        for k in ('features', 'tags', 'specs'):
+            v = p.get(k)
+            if isinstance(v, list):
+                parts.append(', '.join([str(x) for x in v]))
+            elif isinstance(v, dict):
+                parts.append(', '.join([f"{kk}: {vv}" for kk, vv in v.items()]))
+            elif v:
+                parts.append(str(v))
+        query_text = ' '.join([str(x) for x in parts if x])
         docs = retriever.vectorstore.as_retriever(
             search_kwargs={"k": top_k + 1}
         ).invoke(query_text)
@@ -420,6 +200,25 @@ def recommend_products(product_id: str, top_k: int = 5):
     except Exception as e:
         logging.error(f"Recommendations failed: {e}")
         return error_response("Recommendations failed")
+
+# -------------------- Query-based Recommendations --------------------
+@app.get("/recommendations/by-query")
+def recommend_by_query(query: str = Query(...), top_k: int = 6):
+    try:
+        docs = retriever.invoke(query)
+        results = []
+        seen = set()
+        for doc in docs:
+            pid = doc.metadata.get("product_id")
+            if pid in products_cache and pid not in seen:
+                results.append(products_cache[pid])
+                seen.add(pid)
+            if len(results) >= top_k:
+                break
+        return success_response("Query recommendations fetched", results)
+    except Exception as e:
+        logging.error(f"Query recommendations failed: {e}")
+        return error_response("Query recommendations failed")
 
 # -------------------- CART APIs --------------------
 @app.post("/cart/add")

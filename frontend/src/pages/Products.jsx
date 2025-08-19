@@ -33,25 +33,17 @@ export default function Products() {
       <h1 className="text-3xl font-bold mb-6 text-blue-400 text-center">
         Products
       </h1>
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+      <ul className="divide-y divide-gray-800">
         {products.map((product) => (
-          <a
-            key={product.id}
-            href={product.link}
-            className="bg-gray-800 rounded-lg shadow-lg overflow-hidden transform hover:scale-105 transition-transform duration-300"
-          >
-            <img
-              src={product.image}
-              alt={product.name}
-              className="w-full h-48 object-cover"
-            />
-            <div className="p-4">
-              <h2 className="font-semibold text-lg mb-2">{product.name}</h2>
+          <li key={product.id} className="py-4 flex items-center gap-4">
+            <img src={product.image} alt={product.name} className="w-20 h-20 object-cover rounded" />
+            <a href={product.link} className="flex-1">
+              <h2 className="font-semibold text-lg">{product.name}</h2>
               <p className="text-blue-400 font-bold">{product.price}</p>
-            </div>
-          </a>
+            </a>
+          </li>
         ))}
-      </div>
+      </ul>
     </div>
   );
 }
